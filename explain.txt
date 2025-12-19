@@ -1,0 +1,85 @@
+1. GIỚI HẠN PAGE/LIMIT - Tránh giá trị không hợp lệ từ Frontend
+- Validate page và limit từ query params
+- Nếu page < 1: tự động set về 1
+- Nếu limit < 1: tự động set về 5
+- Nếu limit > 100: giới hạn tối đa 100 items/trang để tránh tải quá nhiều dữ liệu
+
+2. CHUẨN HÓA DỮ LIỆU ĐẦU VÀO
+a) Loại bỏ khoảng trắng (trim):
+  - Tất cả string fields được trim() trước khi xử lý
+  - name, email, address đều được trim để loại bỏ khoảng trắng đầu/cuối
+
+b) Tuổi là số nguyên:
+  - Sử dụng parseInt() để chuyển đổi
+  - Validate: phải là số và >= 0
+
+c) Email duy nhất:
+  - Kiểm tra email đã tồn tại trước khi tạo
+  - Sử dụng User.findOne() để query database
+  - Trả về thông báo lỗi rõ ràng với email cụ thể
+
+BACKEND 
+- Tương tự POST, nhưng chỉ chuẩn hóa các trường được truyền vào
+- Kiểm tra email trùng (trừ chính user đang cập nhật)
+
+----------------------------------------------------
+- Validate ID hợp lệ trước khi xóa
+- Sử dụng mongoose.Types.ObjectId.isValid() để kiểm tra
+
+FRONTEND (frontend/index.html):
+- Chuẩn hóa dữ liệu trước khi gửi lên backend
+- Trim tất cả string fields trong UserModal component
+
+
+
+3. CẬP NHẬT CHỈ TRƯỜNG ĐƯỢC TRUYỀN VÀO 
+
+Cách làm:
+1. Tạo object updateData rỗng
+2. Chỉ thêm trường vào updateData nếu req.body.field !== undefined
+3. Kiểm tra Object.keys(updateData).length === 0
+
+
+4. SỬ DỤNG PROMISE.ALL CHO TRUY VẤN SONG SONG 
+- Sử dụng Promise.all() để chạy find() và countDocuments() song song
+- Cải thiện hiệu suất thay vì chạy tuần tự
+
+
+
+5. SỐ THỨ TỰ TĂNG THEO PAGE (Không reset ở mỗi page)
+- Tính STT dựa trên page và limit
+- Công thức: (page - 1) * limit + index + 1
+
+
+
+
+6. RESET PAGE VỀ 1 KHI LIMIT THAY ĐỔI
+- Tạo function handleLimitChange để xử lý khi user thay đổi limit
+- Tự động reset page về 1 khi limit thay đổi
+
+
+7. EMAIL DUY NHẤT - KIỂM TRA TRƯỚC KHI TẠO/CẬP NHẬT
+
+a) Schema level 
+  - Thêm unique: true vào email field
+  - MongoDB tự động tạo index unique
+
+b) Application level - POST 
+  - Kiểm tra email trước khi tạo
+  - Query database để tìm email đã tồn tại
+  - Trả về lỗi ngay lập tức nếu trùng
+
+c) Application level - PUT 
+  - Kiểm tra email trùng (trừ chính user đang cập nhật)
+  - So sánh _id để loại trừ user hiện tại
+
+d) Fallback - Duplicate Key Error 
+  - Bắt lỗi code 11000 từ MongoDB
+  - Trường hợp kiểm tra trên không bắt được 
+  - Vẫn trả về thông báo lỗi rõ ràng
+
+8. DEBOUNCE CHO SEARCH (FRONTEND)
+- Sử dụng useEffect với setTimeout để debounce
+- Đợi 200ms sau khi user ngừng gõ mới gọi API
+- Clear timeout nếu user tiếp tục gõ
+
